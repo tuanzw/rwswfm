@@ -1,0 +1,12 @@
+{% extends 'base.html' %} {% load crispy_forms_tags %}
+{% block content %}
+<br />
+<form method="post">
+    {% csrf_token %}
+    {{ form|crispy}}
+
+    <p>Don't have an account? Please contact the admin!</p>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+
+{% endblock content %}

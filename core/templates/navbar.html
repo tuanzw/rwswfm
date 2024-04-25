@@ -1,0 +1,26 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <div>
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+      </ul>
+    </div>
+    <div>
+      <ul class="navbar-nav">
+        {% if user.is_authenticated %}
+        <!-- {% csrf_token %} -->
+        <span class="navbar-text">Hi {{user.username}} | </span>
+        <li class="nav-item">
+          <a class="nav-link" href="" hx-post="/logout/" hx-push-url="/login/" hx-target="closest body">Logout</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="/login/">Login</a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
