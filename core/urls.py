@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     # homepage
-    path('', views.add_team, name='home'),
+    path('', views.add_assignment, name='home'),
     # team feature
     path('teams', views.add_team, name='add_team'),
     path('teams/check', views.check_team, name='check_team'),
@@ -25,4 +25,18 @@ urlpatterns = [
     path('delete_user/<int:id>', views.delete_user, name='delete_user'),
     path('edit_user/<int:id>', views.edit_user, name='edit_user'),
     path('set_password/<int:id>', views.set_password, name='set_password'),
+
+    # task feature
+    path('tasks', views.add_task, name='add_task'),
+    path('check_task', views.check_task, name='check_task'),
+    path('list_task', views.list_task, name='list_task'),
+    path('delete_task/<int:id>', views.delete_task, name='delete_task'),
+    path('edit_task/<int:id>', views.edit_task, name='edit_task'),
+
+    # assignment feature
+    path('assignments', views.add_assignment, name='add_assignment'),
+    path('check_assignment', views.check_assignment, name='check_assignment'),
+    path('list_assignment', views.list_assignment, name='list_assignment'),
+    path('delete_assignment/<int:id>', views.delete_assignment, name='delete_assignment'),
+    path('edit_assignment/<int:id>', views.edit_assignment, name='edit_assignment'),
 ]

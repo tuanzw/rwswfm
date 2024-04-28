@@ -1,28 +1,33 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 
-from ..models import Team
+from ..models import Team, Task
 
-
-class TeamForm(forms.ModelForm):
+class TaskForm(forms.ModelForm):
     class Meta:
-        model = Team
-        fields = ('name', 'active',)
+        model = Task
+        fields = ('name', 'active', 'team')
 
-
-    name = forms.CharField(max_length=50,
-        widget=forms.TextInput(attrs={
-            'placeholder': 'Team name'
-        }))
-
+    team = forms.ModelChoiceField(
+        queryset=Team.objects.none(),
+        widget=forms.Select(
+            attrs={'placeholder': 'Select Team'}
+        )
+    )
+    
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # populate Team data
+        self.fields['team'].queryset = Team.objects.filter(active=True)
+
         instance = getattr(self, 'instance', None)
         # edit mode
         if instance and instance.pk:
             # disable name
             self.fields['name'].disabled = True
+        
         # Enable crispy form
         self.helper = FormHelper(self)
         # Don't generate Form tag
@@ -35,7 +40,6 @@ class TeamForm(forms.ModelForm):
             pass
         else: # edit mode
             pass
-
         if commit:
             instance.save()
         return instance

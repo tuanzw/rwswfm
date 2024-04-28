@@ -50,7 +50,12 @@ class CarrierForm(forms.ModelForm):
         
         
     def save(self, commit=True):
-        carrier = super().save(commit=False)
+        instance = super().save(commit=False)
+        # model_instance._state.adding is True meaning update mode
+        if instance._state.adding:
+            pass
+        else: # edit mode
+            pass
         if commit:
-            carrier.save()
-        return carrier
+            instance.save()
+        return instance

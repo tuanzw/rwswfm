@@ -43,10 +43,10 @@ class UserForm(UserCreationForm):
         self.helper.form_tag = False
                 
     def save(self, commit=True):
-        user = super().save(commit=False)
+        instance = super().save(commit=False)
         if commit:
-            user.save()
-        return user
+            instance.save()
+        return instance
     
     
 class UserUpdateForm(forms.ModelForm):
@@ -67,10 +67,10 @@ class UserUpdateForm(forms.ModelForm):
         fields = ('username', 'first_name', 'last_name', 'is_active')
 
     def save(self, commit=True):
-        user = super().save(commit=False)
+        instance = super().save(commit=False)
         if commit:
-            user.save()
-        return user
+            instance.save()
+        return instance
 
 
 class SetUserPasswordForm(forms.ModelForm):
@@ -100,11 +100,11 @@ class SetUserPasswordForm(forms.ModelForm):
 
     def save(self, commit=True):
         password = self.cleaned_data["password"]
-        user = User.objects.filter(username=self.username).first()
-        user.set_password(password)
+        instance = User.objects.filter(username=self.username).first()
+        instance.set_password(password)
         if commit:
-            user.save()
-        return user
+            instance.save()
+        return instance
     
     class Meta:
         model = User
