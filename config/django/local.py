@@ -1,3 +1,3 @@
 from .base import *
 
-DJANGO_DEBUG = False
+DJANGO_DEBUG = True

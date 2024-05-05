@@ -39,4 +39,18 @@ urlpatterns = [
     path('list_assignment', views.list_assignment, name='list_assignment'),
     path('delete_assignment/<int:id>', views.delete_assignment, name='delete_assignment'),
     path('edit_assignment/<int:id>', views.edit_assignment, name='edit_assignment'),
+
+    # vendor feature
+    path('vendors', views.add_vendor, name='add_vendor'),
+    path('check_vendor', views.check_vendor, name='check_vendor'),
+    path('list_vendor', views.list_vendor, name='list_vendor'),
+    path('delete_vendor/<int:id>', views.delete_vendor, name='delete_vendor'),
+    path('edit_vendor/<int:id>', views.edit_vendor, name='edit_vendor'),
+
+    # employee feature
+    path('employees', views.add_employee, name='add_employee'),
+    path('check_employee', views.check_employee, name='check_employee'),
+    path('list_employee', views.list_employee, name='list_employee'),
+    path('delete_employee/<int:id>', views.delete_employee, name='delete_employee'),
+    path('edit_employee/<int:id>', views.edit_employee, name='edit_employee'),
 ]
