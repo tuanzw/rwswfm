@@ -129,3 +129,22 @@ Assignment
 - mi_actual
 - status
 
+
+Attendance: (unique: empid,date)
+id
+empid
+date
+site_id
+sys_intime
+sys_outtime
+sup_intime
+sup_outtime
+duration (# sys_outtime - sys_intime, approved: sup_outtime - sup_intime) 
+workday #0.5, 1
+ot
+ot_night
+approved #False, True
+approved_by
+dayoff #False, True
+
+period  #1->12
