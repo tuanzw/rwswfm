@@ -2,13 +2,12 @@
 
 {% load partials %}
 {% load crispy_forms_tags %}
-<!-- StartPartial team-form -->
-{% startpartial team-form %}
+{% partialdef team-form %}
 <div id="dialog" class="modal-dialog" hx-swap-oob="true">
-    <form id="team-form" class="modal-content" hx-post="{{ request.path }}" hx-target="#table_id_team"
-        hx-swap="beforeend">
+    <form id="team-form" class="modal-content" hx-post="{{ request.path }}"
+        hx-target="{{ hx_target|default:'#table_id_team' }}" hx-swap="{{ hx_swap|default:'beforeend' }}">
         <div class="modal-header">
-            <h5 class="modal-title">Add Team</h5>
+            <h5 class="modal-title">{{ form.instance.pk|yesno:"Edit Team,Add Team" }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">{% crispy form %}</div>
@@ -18,15 +17,13 @@
         </div>
     </form>
 </div>
-{% endpartial %}
-<!-- EndPartial team-form -->
-<!-- Startpartial team-rows -->
-{% startpartial team-rows %}
+{% endpartialdef team-form %}
+
+{% partialdef team-rows %}
 {% for team in teams %}
-<tr>
+<tr id="row-{{ team.id }}">
     <th scope="row">{{team.id}}</th>
     <td>{{team.name}}</td>
-    <td>{{team.slug}}</td>
     <td class="text-center"><span>{% if team.active %}<i class="bi bi-check-square"></i>
             {% else %}<i class="bi bi-square-fill"></i>{% endif %}</span></td>
     {% if perms.core.add_team %}
@@ -42,8 +39,7 @@
     {% endif %}
 </tr>
 {% endfor %}
-{% endpartial %}
-<!-- Endpartial team-rows -->
+{% endpartialdef team-rows %}
 
 {% block content %}
 {% if perms.core.add_team %}
@@ -62,7 +58,6 @@
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Name</th>
-                <th scope="col">Slug</th>
                 <th scope="col" class="text-center">Active</th>
                 {% if perms.core.add_team %}
                 <th scope="col"></th>
@@ -71,28 +66,7 @@
         </thead>
         <tbody class="table-group-divider" id="table_id_team" hx-get="{% url 'list_team' %}"
             hx-trigger="list-changed from:body" hx-target="this">
-            {% for team in teams %}
-            <tr>
-                <th scope="row">{{team.id}}</th>
-                <td>{{team.name}}</td>
-                <td>{{team.slug}}</td>
-                <td class="text-center"><span>{% if team.active %}<i class="bi bi-check-square"></i>
-                        {% else %}<i class="bi bi-square-fill"></i>{%endif %}</span></td>
-                {% if perms.core.add_team %}
-                <!-- hx-target="#dialog" with hx-get method to load data for Edit Form Dialog  -->
-                <td><span class="hover m-1" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                        hx-get="{% url 'edit_team' team.id %}" hx-target="#dialog" data-bs-toggle="tooltip"
-                        data-bs-title="Edit">
-                        <i class="bi bi-pencil-square"></i></span>
-                    <span id="icon-delete" class="hover hover-danger m-1"
-                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-delete="{% url 'delete_team' team.id %}"
-                        hx-confirm="Do you want to delete: {{team.team}}?" hx-target="closest tr"
-                        hx-swap="outerHTML swap:1s" data-bs-toggle="tooltip" title="Delete">
-                        <i class="bi bi-trash3"></i></span>
-                </td>
-                {% endif %}
-            </tr>
-            {% endfor %}
+            {% partial team-rows %}
         </tbody>
     </table>
 </div>

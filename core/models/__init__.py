@@ -1,3 +1,4 @@
-from .team import *
-from .carrier import *
-from .user import *
+from core.models.team import *
+from core.models.carrier import *
+from core.models.user import *
+from core.models.task import *

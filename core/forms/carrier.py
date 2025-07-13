@@ -1,43 +1,42 @@
 from django import forms
 from django.urls import reverse_lazy
 
-from crispy_forms.helper import FormHelper
 
-from ..models import Carrier
-from ..validators import alphanumeric
+from core.models import Carrier
+from core.forms import BaseModelForm
+from core.validators import alphanumeric
 
 
-class CarrierForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        instance = getattr(self, 'instance', None)
-        if instance and instance.pk:
-            self.fields['carrier'].disabled = True
-            
-        self.helper = FormHelper(self)
-        self.helper.form_tag = False
+class CarrierForm(BaseModelForm):
+    readonly_on_edit = ['carrier']
     
     class Meta:
         model = Carrier
-        fields = ('carrier', 'name', 'address')
+        fields = ('carrier', 'name', 'active', 'address')
         widgets = {
             'carrier': forms.TextInput(attrs={
-                'length': 20,
-                'placeholder': 'Only alphaNumeric accepted!',
+                'length': 30,
+                'placeholder': 'Carrier - Only Alphanumeric & hyphen',
                 'hx-get': reverse_lazy('check_carrier'),
                 'hx-trigger': 'keyup changed delay:500ms',
-                'hx-target': '#div_id_carrier',
+                'hx-target': '#div_id_carrier', # div_id_carrier created by crispy
                 'hx-swap': 'outerHTML',
             }),
             'name': forms.TextInput(attrs={
                 'length': 200,
-                'placeholder': 'Name'
+                'placeholder': 'Name',
+                'class': 'form-control',
+            }),
+            'active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
             }),
             'address': forms.TextInput(attrs={
                 'length': 300,
-                'placeholder': 'Address'
+                'placeholder': 'Address',
+                'class': 'form-control',
             }),
         }
+        
     
     def clean_carrier(self):
         instance = getattr(self, 'instance', None)
@@ -48,9 +47,9 @@ class CarrierForm(forms.ModelForm):
             alphanumeric(inputted_carrier)
             return inputted_carrier
         
-        
     def save(self, commit=True):
-        carrier = super().save(commit=False)
+        instance: Carrier = super().save(commit=False)
+        instance.carrier = instance.carrier.strip().upper()
         if commit:
-            carrier.save()
-        return carrier
+            instance.save()
+        return instance

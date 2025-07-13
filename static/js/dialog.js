@@ -1,38 +1,59 @@
 ; (function () {
-    const modal = new bootstrap.Modal(document.getElementById("modal"))
-    const modal_id_array = ["table_id_carrier", "table_id_user"]
+    const modalEl = document.getElementById("modal");
+    if (!modalEl) return;
 
-    htmx.on("htmx:load", (e) => {
-        console.log("load", e)
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-    })
+    const modal = new bootstrap.Modal(modalEl);
 
+    // Tooltip initialization after HTMX loads content
+    htmx.on("htmx:load", () => {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+    });
+
+    // Show modal if the #dialog container gets new content
     htmx.on("htmx:afterSwap", (e) => {
-        console.log(e.detail.target.id)
-        if (e.detail.target.id == "dialog") {
-            modal.show()
+        if (e.detail.target.id === "dialog") {
+            console.log("HTMX:afterSwap → showing modal");
+            modal.show();
         }
-    })
-    htmx.on("htmx:beforeSwap", (e) => {
-        console.log(e)
-        // if (modal_id_array.includes(e.detail.target.id)) {
-        //     modal.hide()
-        // }
-    })
-    htmx.on("hidden.bs.modal", () => {
-        document.getElementById("dialog").innerHTML = ""
-    })
+    });
+
+    // Blur focused element before modal is hidden (cancel or ESC) to prevent aria-hidden warning
+    modalEl.addEventListener("hide.bs.modal", () => {
+        const activeEl = document.activeElement;
+        if (modalEl.contains(activeEl)) {
+            activeEl.blur();
+        }
+    });
+
+    // Hide modal on custom 'on-success' trigger from server
     htmx.on("on-success", () => {
-        console.log("on-success")
-        modal.hide()
-    })
+        console.log("HTMX:on-success → hiding modal");
+        const activeEl = document.activeElement;
+        if (modalEl.contains(activeEl)) {
+            activeEl.blur();
+        }
+        modal.hide();
+    });
+
+    // Cleanup modal content once it's hidden
+    htmx.on("hidden.bs.modal", (e) => {
+        if (e.target.id === "modal") {
+            document.getElementById("dialog").innerHTML = "";
+        }
+    });
+
+    // Disable submit button if form has errors
     htmx.on("frm-has-errors", () => {
-        console.log("frm-has-errors")
-        document.getElementById("btn-id-save").disabled = true
-    })
+        console.log("HTMX:form has errors → disable submit");
+        const btn = document.getElementById("btn-id-save");
+        if (btn) btn.disabled = true;
+    });
+
+    // Enable submit button if form is valid
     htmx.on("frm-no-errors", () => {
-        console.log("frm-no-errors")
-        document.getElementById("btn-id-save").disabled = false
-    })
-})()
+        console.log("HTMX:form has no errors → enable submit");
+        const btn = document.getElementById("btn-id-save");
+        if (btn) btn.disabled = false;
+    });
+})();

@@ -3,109 +3,109 @@ from django.contrib.auth.decorators import login_required, permission_required
 from crispy_forms.templatetags.crispy_forms_filters import as_crispy_field
 from django_htmx.http import trigger_client_event
 
-import json
-
-from ..forms import UserForm, UserUpdateForm, SetUserPasswordForm
-from ..models import User
+from core.forms import UserForm, UserUpdateForm, SetUserPasswordForm
+from core.models import User
 
 @login_required()
 def list_user(request):
-    if request.method == 'GET':
-        users = User.objects.all()
-        context = {'users': users}
-        return render(request, 'user.html#user-rows', context)
+    return render(request, 'user.html#user-rows', {'users': User.objects.all()})
 
 @login_required
 def add_user(request):
     if not request.htmx:
-        users = User.objects.all()
-        context = {'users': users}
-        return render(request, 'user.html', context)
-    else:
-        if request.method == 'GET':
-            context = {'form': UserForm()}
-            return render(request, 'user.html#user-form', context)
-        elif request.method == 'POST':
-            form = UserForm(request.POST)
-            if form.is_valid():
-                user = form.save()
-                message = f'{user.username} added successfully!'
-                context = {'users': [user],}
-                response = render(request, 'user.html#user-rows', context)
-                response = trigger_client_event(response, 'on-success')
-                response = trigger_client_event(response, 'showMessage', message)
-                return response
-            
-            context = {'form': form}
-            return render(request, 'user.html#user-form', context)
+        return render(request, 'user.html', {'users': User.objects.all()})
+    if request.method == 'GET':
+        context = {
+            'form': UserForm(),
+            'hx_target': '#table_id_user',
+            'hx_swap': 'beforeend',
+        }
+        return render(request, 'user.html#user-form', context)
+    
+    form = UserForm(request.POST)
+    if form.is_valid():
+        obj = form.save()
+        message = f'{obj.username} added successfully!'
+        response = render(request, 'user.html#user-rows', {'users': [obj],})
+        response = trigger_client_event(response, 'on-success')
+        response = trigger_client_event(response, 'showMessage', message)
+        return response
+    
+    context = {
+        'form': form,
+        'hx_target': '#table_id_user',
+        'hx_swap': 'beforeend',
+    }
+    return render(request, 'user.html#user-form', context)
 
 @login_required
 def edit_user(request, id):
+    obj = get_object_or_404(User, pk=id)
     if request.method == 'GET':
-        user = get_object_or_404(User, pk=id)
-        user_frm = UserUpdateForm(instance=user)
-        context = {'form': user_frm}
+        context = {
+            'form': UserUpdateForm(instance=obj),
+            'hx_target': f'#row-{obj.id}',
+            'hx_swap': 'outerHTML',
+        }
         return render(request, 'user.html#user-form', context)
-    elif request.method == 'POST':
-        user = get_object_or_404(User, pk=id)
-        form = UserUpdateForm(request.POST, instance=user)
-        if form.is_valid():
-            user = form.save()
-            context = {'user': user}
-            message = f'{user.username} updated successfully!'
-            response = HttpResponse(status=200, headers={
-                'HX-Trigger': json.dumps({
-                    'list-changed': None,
-                    'on-success': None,
-                    'showMessage': message
-                })
-            })
-            print(response.headers)
-            return response
-        print(form.errors)
-        context = {'form': form}
-        return render(request, 'user.html#user-form', context)
+    form = UserUpdateForm(request.POST, instance=obj)
+    if form.is_valid():
+        obj = form.save()
+        context = {
+            'users': [obj]
+        }
+        message = f'{obj.username} updated successfully!'
+        response = render(request, 'user.html#user-rows', context)
+        response = trigger_client_event(response, 'on-success')
+        response = trigger_client_event(response, 'showMessage', message)
+        return response
+    
+    context = {
+        'form': form,
+        'hx_target': f'#row-{obj.id}',
+        'hx_swap': 'outerHTML',
+    }
+    return render(request, 'user.html#user-form', context)
 
 @login_required
 def delete_user(request, id):
     if request.method == 'DELETE':
-        user = User.objects.filter(pk=id).first()
-        user.delete()
-        return HttpResponse(status=200, headers={
-            'HX-Trigger': json.dumps({
-                'showMessage': f'User {user.username} deleted!',
-            })
-        })
+        obj = get_object_or_404(User, pk=id)
+        obj.delete()
+        response = HttpResponse(status=200)
+        response = trigger_client_event(response, 'on-success')
+        response = trigger_client_event(response, 'showMessage', f'User {obj.username} deleted!')
+        return response
+
 def check_username(request):
-    user_frm = UserForm(request.GET)
-    response = HttpResponse(as_crispy_field(user_frm['username']))
-    if user_frm.has_error('username'):
-        return trigger_client_event(response, 'frm-has-errors')
-    return trigger_client_event(response, 'frm-no-errors')
+    form = UserForm(request.GET)
+    response = HttpResponse(as_crispy_field(form['username']))
+    trigger = 'frm-has-errors' if form.has_error('username') else 'frm-no-errors'
+    return trigger_client_event(response, trigger)
 
 def set_password(request, id):
+    obj = get_object_or_404(User, pk=id)
     if request.method == 'GET':
-        user = get_object_or_404(User, pk=id)
-        user_frm = SetUserPasswordForm(instance=user)
-        print(user)
-        context = {'form': user_frm}
+        context = {
+            'form': SetUserPasswordForm(instance=obj),
+            'hx_target': f'#row-{obj.id}',
+            'hx_swap': 'outerHTML',
+        }
         return render(request, 'user.html#user-form', context)
-    elif request.method == 'POST':
-        print(request.POST)
-        user = get_object_or_404(User, pk=id)
-        form = SetUserPasswordForm(request.POST, instance=user)
-        if form.is_valid():
-            user = form.save()
-            context = {'user': user}
-            message = f'Password for {user.username} changed successfully!'
-            response = HttpResponse(status=200, headers={
-                'HX-Trigger': json.dumps({
-                    'on-success': None,
-                    'showMessage': message
-                })
-            })
-            print(response.headers)
-            return response
-        print(form.errors)
-        context = {'form': form}
-        return render(request, 'user.html#user-form', context)
+    
+    form = SetUserPasswordForm(request.POST, instance=obj)
+    if form.is_valid():
+        context = {
+            'users': [obj],
+        }
+        response = render(request, 'user.html#user-rows', context)
+        response = trigger_client_event(response, 'on-success')
+        response = trigger_client_event(response, 'showMessage', f'Password for {obj.username} changed successfully!')
+        return response
+
+    context = {
+        'form': form,
+        'hx_target': f'#row-{obj.id}',
+        'hx_swap': 'outerHTML',
+    }
+    return render(request, 'user.html#user-form', context)

@@ -3,84 +3,83 @@ from django.contrib.auth.decorators import login_required
 from crispy_forms.templatetags.crispy_forms_filters import as_crispy_field
 from django_htmx.http import trigger_client_event
 
-import json
+from core.forms import TeamForm
+from core.models import Team
 
-from ..forms import TeamForm
-from ..models import Team
-
-    
 @login_required
 def add_team(request):
     if not request.htmx:
-        teams = Team.objects.all()
-        context = {'teams': teams}
-        return render(request, 'team.html', context)
-    else:
-        if request.method == 'GET':
-            context = {'form': TeamForm()}
-            return render(request, 'team.html#team-form', context)
-        elif request.method == 'POST':
-            form = TeamForm(request.POST)
-            if form.is_valid():
-                team = form.save()
-                message = f'{team.name} added successfully!'
-                context = {'teams': [team],}
-                response = render(request, 'team.html#team-rows', context)
-                response = trigger_client_event(response, 'on-success')
-                response = trigger_client_event(response, 'showMessage', message)
-                return response
-            
-            context = {'form': form}
-            return render(request, 'team.html#team-form', context)
+        return render(request, 'team.html', {'teams': Team.objects.all()})
+    if request.method == 'GET':
+        context = {
+            'form': TeamForm(),
+            'hx_target': '#table_id_team',
+            'hx_swap': 'beforeend',
+        }
+        return render(request, 'team.html#team-form', context)
+    form = TeamForm(request.POST)
+    if form.is_valid():
+        obj = form.save()
+        message = f'{obj.name} added successfully!'
+        response = render(request, 'team.html#team-rows', {'teams': [obj],})
+        response = trigger_client_event(response, 'on-success')
+        response = trigger_client_event(response, 'showMessage', message)
+        return response
+    
+    context = {
+        'form': form,
+        'hx_target': '#table_id_team',
+        'hx_swap': 'beforeend',
+    }
+    return render(request, 'team.html#team-form', context)
 
 @login_required
 def list_team(request):
-    if request.method == 'GET':
-        teams = Team.objects.all()
-        context = {'teams': teams}
-        return render(request, 'team.html#team-rows', context)
+    return render(request, 'team.html#team-rows', {'teams': Team.objects.all()})
 
 @login_required
 def edit_team(request, id):
+    obj = get_object_or_404(Team, pk=id)
     if request.method == 'GET':
-        team = get_object_or_404(Team, pk=id)
-        team_frm = TeamForm(instance=team)
-        context = {'form': team_frm}
+        context = {
+            'form': TeamForm(instance=obj),
+            'hx_target': f'#row-{obj.id}',
+            'hx_swap': 'outerHTML',
+        }
         return render(request, 'team.html#team-form', context)
-    elif request.method == 'POST':
-        team = get_object_or_404(Team, pk=id)
-        form = TeamForm(request.POST, instance=team)
-        if form.is_valid():
-            team = form.save()
-            message = f'{team.name} updated successfully!'
-            response = HttpResponse(status=200, headers={
-                'HX-Trigger': json.dumps({
-                    'list-changed': None,
-                    'on-success': None,
-                    'showMessage': message
-                })
-            })
-            return response
-        context = {'form': form}
-        return render(request, 'team.html#team-form', context)
+    form = TeamForm(request.POST, instance=obj)
+    if form.is_valid():
+        obj = form.save()
+        message = f'{obj.name} updated successfully!'
+        context = {
+            'teams': [obj],
+        }
+        response = render(request, 'team.html#team-rows', context)
+        response = trigger_client_event(response, 'on-success')
+        response = trigger_client_event(response, 'showMessage', message)
+        return response
+
+    context = {
+        'form': form,
+        'hx_target': f'#row-{obj.id}',
+        'hx_swap': 'outerHTML',
+    }
+    return render(request, 'team.html#team-form', context)
         
 
 def check_team(request):
-    team_frm = TeamForm(request.GET)
-    response = HttpResponse(as_crispy_field(team_frm['name']))
-    if team_frm.has_error('name'):
-        return trigger_client_event(response, 'frm-has-errors')
-    return trigger_client_event(response, 'frm-no-errors')
+    form = TeamForm(request.GET)
+    response = HttpResponse(as_crispy_field(form['name']))
+    trigger = 'frm-has-errors' if form.has_error('name') else 'frm-no-errors'
+    return trigger_client_event(response, trigger)
     
     
 @login_required
 def delete_team(request, id):
     if request.method == 'DELETE':
-        team = Team.objects.filter(pk=id).first()
-        team.delete()
-        return HttpResponse(status=200, headers={
-            'HX-Trigger': json.dumps({
-                'on-success': None,
-                'showMessage': f'Team {team.name} deleted!',
-            })
-        })
+        obj = get_object_or_404(Team, pk=id)
+        obj.delete()
+        response = HttpResponse(status=200)
+        response = trigger_client_event(response, 'on-success')
+        response = trigger_client_event(response, 'showMessage', f'Team {obj.name} deleted!')
+        return response

@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 
 from crispy_forms.helper import FormHelper
 
-from ..models import User
+from core.models import User
     
 class UserForm(UserCreationForm):
 

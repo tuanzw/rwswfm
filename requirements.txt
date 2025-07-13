@@ -7,3 +7,4 @@ django-template-partials
 django-htmx
 django-crispy-forms
 crispy-bootstrap5
+pydantic

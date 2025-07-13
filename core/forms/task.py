@@ -1,29 +1,29 @@
-from django import forms
+# your_app/forms/task.py
 
-from core.models import Team
+from django import forms
+from core.models import Task
 from core.forms import BaseModelForm
 
-
-class TeamForm(BaseModelForm):
-    readonly_on_edit = ['name']
+class TaskForm(BaseModelForm):
+    readonly_on_edit = ['name']  # name is visible but readonly in edit mode
 
     class Meta:
-        model = Team
-        fields = ('name', 'active',)
+        model = Task
+        fields = ('name', 'active')
         widgets = {
             'name': forms.TextInput(attrs={
-                'placeholder': 'Team',
+                'placeholder': 'Task',
                 'class': 'form-control',
             }),
             'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         labels = {
-            'name': 'Team',
+            'name': 'Task',
             'active': 'Is Active?',
         }
 
     def save(self, commit=True):
-        instance: Team = super().save(commit=False)
+        instance: Task = super().save(commit=False)
         instance.name = instance.name.strip().upper()
         if commit:
             instance.save()

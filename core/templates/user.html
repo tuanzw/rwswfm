@@ -2,13 +2,12 @@
 
 {% load partials %}
 {% load crispy_forms_tags %}
-<!-- StartPartial user-form -->
-{% startpartial user-form %}
+{% partialdef user-form %}
 <div id="dialog" class="modal-dialog" hx-swap-oob="true">
-    <form id="user-form" class="modal-content" hx-post="{{ request.path }}" hx-target="#table_id_user"
-        hx-swap="beforeend">
+    <form id="user-form" class="modal-content" hx-post="{{ request.path }}"
+        hx-target="{{ hx_target|default:'#table_id_user' }}" hx-swap="{{ hx_swap|default:'beforeend' }}">
         <div class="modal-header">
-            <h5 class="modal-title">Add User</h5>
+            <h5 class="modal-title">{{ form.instance.pk|yesno:"Edit User,Add User" }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">{% crispy form %}</div>
@@ -18,12 +17,11 @@
         </div>
     </form>
 </div>
-{% endpartial %}
-<!-- EndPartial user-form -->
-<!-- Startpartial user-rows -->
-{% startpartial user-rows %}
+{% endpartialdef user-form %}
+
+{% partialdef user-rows %}
 {% for user in users %}
-<tr>
+<tr id="row-{{ user.id }}">
     <th scope="row">{{user.id}}</th>
     <td>{{user.username}}</td>
     <td>{{user.first_name}}</td>
@@ -42,8 +40,7 @@
     {% endif %}
 </tr>
 {% endfor %}
-{% endpartial %}
-<!-- Endpartial user-rows -->
+{% endpartialdef user-rows %}
 
 {% block content %}
 
@@ -73,28 +70,7 @@
         </thead>
         <tbody class="table-group-divider" id="table_id_user" hx-get="{% url 'list_user' %}"
             hx-trigger="list-changed from:body" hx-target="this">
-            {% for user in users %}
-            <tr>
-                <th scope="row">{{user.id}}</th>
-                <td>{{user.username}}</td>
-                <td>{{user.first_name}}</td>
-                <td>{{user.last_name}}</td>
-                <td class="text-center"><span>{% if user.is_active %}<i class="bi bi-check-square"></i>
-                        {% else %}<i class="bi bi-square-fill"></i>{%endif %}</span></td>
-                {% if perms.core.add_user %}
-                <!-- hx-target="#dialog" with hx-get method to load data for Edit Form Dialog  -->
-                <td><span class="hover m-1" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                        hx-get="{% url 'edit_user' user.id %}" hx-target="#dialog" data-bs-toggle="tooltip"
-                        data-bs-title="Edit">
-                        <i class="bi bi-pencil-square"></i></span>
-                    <span class="hover m-1" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                        hx-get="{% url 'set_password' user.id %}" hx-target="#dialog" data-bs-toggle="tooltip"
-                        title="Change Password">
-                        <i class="bi bi-key"></i></span>
-                </td>
-                {% endif %}
-            </tr>
-            {% endfor %}
+            {% partial user-rows %}
         </tbody>
     </table>
 </div>
