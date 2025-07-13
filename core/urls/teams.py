@@ -3,9 +3,9 @@ from core.views.team import *
 
 urlpatterns = [
     # team feature
-    path('', add_team, name='add_team'),
-    path('check/', check_team, name='check_team'),
-    path('list/', list_team, name='list_team'),
-    path('delete/<int:id>/', delete_team, name='delete_team'),
-    path('edit/<int:id>/', edit_team, name='edit_team'),
+    path('', TeamListView.as_view(), name='list_team'),
+    path('add/', TeamAddView.as_view(), name='add_team'),
+    path('edit/<int:pk>/', TeamEditView.as_view(), name='edit_team'),
+    path('delete/<int:pk>/', TeamDeleteView.as_view(), name='delete_team'),
+    path('check/', TeamCheckView.as_view(), name='check_team'),
 ]

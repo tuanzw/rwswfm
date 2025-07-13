@@ -1,97 +1,91 @@
-from django.shortcuts import render, HttpResponse, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
+from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 from crispy_forms.templatetags.crispy_forms_filters import as_crispy_field
 from django_htmx.http import trigger_client_event
 
 from core.forms import TaskForm
 from core.models import Task
-    
-@login_required
-def add_task(request):
-    if not request.htmx:
-        return render(request, 'task.html', {'tasks': Task.objects.all()})
-    
-    # create a modal form for ADDING, set hx_target to the table and hx_swap the beforeend meaning that the added row will be on top
-    if request.method == 'GET':
-        context = {
-            'form': TaskForm(),
+
+class TaskListView(LoginRequiredMixin, ListView):
+    model = Task
+    context_object_name = 'tasks'
+    template_name = 'task.html'
+
+    def get(self, request, *args, **kwargs):
+        if not request.htmx:
+            return super().get(request, *args, **kwargs)
+        context = self.get_context_data()
+        return render(request, 'task.html#task-rows', context)
+
+class TaskAddView(LoginRequiredMixin, CreateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'task.html#task-form'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
             'hx_target': '#table_id_task',
             'hx_swap': 'beforeend',
-        }
-        return render(request, 'task.html#task-form', context)
-    
-    # form is valid then swap the whole content here to hx_target and by hx_swap defined
-    form = TaskForm(request.POST)
-    if form.is_valid():
+        })
+        return context
+
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def form_valid(self, form):
         obj = form.save()
         message = f'{obj.name} added successfully!'
-        response = render(request, 'task.html#task-rows', {'tasks': [obj],})
+        response = render(self.request, 'task.html#task-rows', {'tasks': [obj]})
         response = trigger_client_event(response, 'on-success')
         response = trigger_client_event(response, 'showMessage', message)
         return response
-    
-    # form is not valid, so re-define the hx_target and hx_swap
-    context = {
-        'form': form,
-        'hx_target': '#table_id_task',
-        'hx_swap': 'beforeend',
-    }
-    return render(request, 'task.html#task-form', context)
 
-@login_required
-def list_task(request):
-    return render(request, 'task.html#task-rows', {'tasks': Task.objects.all()})
+    def form_invalid(self, form):
+        return super().form_invalid(form)
 
-@login_required
-def edit_task(request, id):
-    obj = get_object_or_404(Task, pk=id)
+class TaskEditView(LoginRequiredMixin, UpdateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'task.html#task-form'
 
-    # creating a modal form for EDITING, set the hx_target & hx_swap so that htmx will know
-    # where to swap the content after submission
-    if request.method == 'GET':
-        context = {
-            'form': TaskForm(instance=obj),
-            'hx_target': f'#row-{obj.id}',
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'hx_target': f'#row-{self.object.pk}',
             'hx_swap': 'outerHTML',
-        }
-        return render(request, 'task.html#task-form', context)
-    
-    # form is valid then htmx will swap to the hx_target and hx_swap defiend when creating the modal form 
-    form = TaskForm(request.POST, instance=obj)
-    if form.is_valid():
+        })
+        return context
+
+    def form_valid(self, form):
         obj = form.save()
         message = f'{obj.name} updated successfully!'
-        context = {
-            'tasks': [obj],
-        }
-        response = render(request, 'task.html#task-rows', context)
+        response = render(self.request, 'task.html#task-rows', {'tasks': [obj]})
         response = trigger_client_event(response, 'on-success')
         response = trigger_client_event(response, 'showMessage', message)
         return response
-    
-    # there is error so re-define hx_target and hx_swap
-    context = {
-        'form': form,
-        'hx_target': f'#row-{obj.id}',
-        'hx_swap': 'outerHTML',
-    }
-    return render(request, 'task.html#task-form', context)
-        
 
+    # add extra_context in response as overiding form_invalid
+    def form_invalid(self, form):
+        return super().form_invalid(form)
 
-def check_task(request):
-    form = TaskForm(request.GET)
-    response = HttpResponse(as_crispy_field(form['name']))
-    trigger = 'frm-has-errors' if form.has_error('name') else 'frm-no-errors'
-    return trigger_client_event(response, trigger)
-    
-    
-@login_required
-def delete_task(request, id):
-    if request.method == 'DELETE':
-        obj = get_object_or_404(Task, pk=id)
-        obj.delete()
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
+    model = Task
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        name = self.object.name
+        self.object.delete()
         response = HttpResponse(status=200)
         response = trigger_client_event(response, 'on-success')
-        response = trigger_client_event(response, 'showMessage', f'Task {obj.name} deleted!')
+        response = trigger_client_event(response, 'showMessage', f'Task {name} deleted!')
         return response
+        
+class TaskCheckView(LoginRequiredMixin, View):
+    def get(self, request):
+        form = TaskForm(request.GET)
+        response = HttpResponse(as_crispy_field(form['name']))
+        trigger = 'frm-has-errors' if form.has_error('name') else 'frm-no-errors'
+        return trigger_client_event(response, trigger)

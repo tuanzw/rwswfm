@@ -1,85 +1,92 @@
-from django.shortcuts import render, HttpResponse, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
 from crispy_forms.templatetags.crispy_forms_filters import as_crispy_field
 from django_htmx.http import trigger_client_event
 
 from core.forms import TeamForm
 from core.models import Team
 
-@login_required
-def add_team(request):
-    if not request.htmx:
-        return render(request, 'team.html', {'teams': Team.objects.all()})
-    if request.method == 'GET':
-        context = {
-            'form': TeamForm(),
+class TeamListView(LoginRequiredMixin, ListView):
+    model = Team
+    context_object_name = 'teams'
+    template_name = 'team.html'
+
+    def get(self, request, *args, **kwargs):
+        if not request.htmx:
+            return super().get(request, *args, **kwargs)
+        context = self.get_context_data()
+        return render(request, 'team.html#team-rows', context)
+
+class TeamAddView(LoginRequiredMixin, CreateView):
+    model = Team
+    form_class = TeamForm
+    template_name = 'team.html#team-form'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
             'hx_target': '#table_id_team',
             'hx_swap': 'beforeend',
-        }
-        return render(request, 'team.html#team-form', context)
-    form = TeamForm(request.POST)
-    if form.is_valid():
+        })
+        return context
+
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def form_valid(self, form):
         obj = form.save()
         message = f'{obj.name} added successfully!'
-        response = render(request, 'team.html#team-rows', {'teams': [obj],})
+        response = render(self.request, 'team.html#team-rows', {'teams': [obj]})
         response = trigger_client_event(response, 'on-success')
         response = trigger_client_event(response, 'showMessage', message)
         return response
-    
-    context = {
-        'form': form,
-        'hx_target': '#table_id_team',
-        'hx_swap': 'beforeend',
-    }
-    return render(request, 'team.html#team-form', context)
 
-@login_required
-def list_team(request):
-    return render(request, 'team.html#team-rows', {'teams': Team.objects.all()})
+    def form_invalid(self, form):
+        return super().form_invalid(form)      
+ 
+class TeamEditView(LoginRequiredMixin, UpdateView):
+    model = Team
+    form_class = TeamForm
+    template_name = 'team.html#team-form'
 
-@login_required
-def edit_team(request, id):
-    obj = get_object_or_404(Team, pk=id)
-    if request.method == 'GET':
-        context = {
-            'form': TeamForm(instance=obj),
-            'hx_target': f'#row-{obj.id}',
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'hx_target': f'#row-{self.object.pk}',
             'hx_swap': 'outerHTML',
-        }
-        return render(request, 'team.html#team-form', context)
-    form = TeamForm(request.POST, instance=obj)
-    if form.is_valid():
+        })
+        return context
+
+    def form_valid(self, form):
         obj = form.save()
         message = f'{obj.name} updated successfully!'
-        context = {
-            'teams': [obj],
-        }
-        response = render(request, 'team.html#team-rows', context)
+        response = render(self.request, 'team.html#team-rows', {'teams': [obj]})
         response = trigger_client_event(response, 'on-success')
         response = trigger_client_event(response, 'showMessage', message)
         return response
 
-    context = {
-        'form': form,
-        'hx_target': f'#row-{obj.id}',
-        'hx_swap': 'outerHTML',
-    }
-    return render(request, 'team.html#team-form', context)
-        
+    # add extra_context in response as overiding form_invalid
+    def form_invalid(self, form):
+        context = self.get_context_data(form=form)
+        return render(self.request, 'team.html#team-form', context)
 
-def check_team(request):
-    form = TeamForm(request.GET)
-    response = HttpResponse(as_crispy_field(form['name']))
-    trigger = 'frm-has-errors' if form.has_error('name') else 'frm-no-errors'
-    return trigger_client_event(response, trigger)
-    
-    
-@login_required
-def delete_team(request, id):
-    if request.method == 'DELETE':
-        obj = get_object_or_404(Team, pk=id)
-        obj.delete()
+class TeamDeleteView(LoginRequiredMixin, DeleteView):
+    model = Team
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        name = self.object.name
+        self.object.delete()
         response = HttpResponse(status=200)
         response = trigger_client_event(response, 'on-success')
-        response = trigger_client_event(response, 'showMessage', f'Team {obj.name} deleted!')
+        response = trigger_client_event(response, 'showMessage', f'Team {name} deleted!')
         return response
+
+class TeamCheckView(LoginRequiredMixin, View):
+    def get(self, request):
+        form = TeamForm(request.GET)
+        response = HttpResponse(as_crispy_field(form['name']))
+        trigger = 'frm-has-errors' if form.has_error('name') else 'frm-no-errors'
+        return trigger_client_event(response, trigger)

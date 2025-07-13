@@ -1,8 +1,8 @@
 from django.urls import include, path
-from core.urls.tasks import add_task
+from core.urls.tasks import TaskListView
 
 urlpatterns = [
-    path('', add_task, name='home'),
+    path('', TaskListView.as_view(), name='home'),
     path('teams/', include('core.urls.teams')),
     path('carriers/', include('core.urls.carriers')),
     path('users/', include('core.urls.users')),

@@ -1,3 +1,9 @@
+htmx:
+When receiving the response from server. HTMX will swap the response content to hx-target in current DOM
+followed by hx-swap
+HTMX itself will fire several events,..example afterSwap - it means done the swapping.
+Then we hide the modal. -> fire several events relating modal example hidden,...then clear the modal content. 
+
 # rwswfm
 # pip install -r requirements.txt
 Django

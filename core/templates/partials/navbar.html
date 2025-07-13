@@ -14,22 +14,22 @@
       <ul class="navbar-nav me-auto">
         {% if user.is_authenticated %}
         <li class="nav-item">
-          <a class="nav-link {% if request.path == '/teams/' %}active{% endif %}" href="{% url 'add_team' %}">
+          <a class="nav-link {% if request.path == '/teams/' %}active{% endif %}" href="{% url 'list_team' %}">
             <i class="bi bi-people"></i> Teams
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {% if request.path == '/carriers/' %}active{% endif %}" href="{% url 'add_carrier' %}">
+          <a class="nav-link {% if request.path == '/carriers/' %}active{% endif %}" href="{% url 'list_carrier' %}">
             <i class="bi bi-truck"></i> Carriers
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {% if request.path == '/users/' %}active{% endif %}" href="{% url 'add_user' %}">
+          <a class="nav-link {% if request.path == '/users/' %}active{% endif %}" href="{% url 'list_user' %}">
             <i class="bi bi-person"></i> Users
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {% if request.path == '/tasks/' %}active{% endif %}" href="{% url 'add_task' %}">
+          <a class="nav-link {% if request.path == '/tasks/' %}active{% endif %}" href="{% url 'list_task' %}">
             <i class="bi bi-list-task"></i> Tasks
           </a>
         </li>

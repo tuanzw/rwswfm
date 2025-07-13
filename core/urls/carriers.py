@@ -3,9 +3,9 @@ from core.views.carrier import *
 
 urlpatterns = [
     # carrier feature
-    path('', add_carrier, name='add_carrier'),
-    path('check/', check_carrier, name='check_carrier'),
-    path('list/', list_carrier, name='list_carrier'),
-    path('delete/<int:id>/', delete_carrier, name='delete_carrier'),
-    path('edit/<int:id>/', edit_carrier, name='edit_carrier'),
-]
+    path('', CarrierListView.as_view(), name='list_carrier'),
+    path('add/', CarrierAddView.as_view(), name='add_carrier'),
+    path('edit/<int:pk>/', CarrierEditView.as_view(), name='edit_carrier'),
+    path('delete/<int:pk>/', CarrierDeleteView.as_view(), name='delete_carrier'),
+    path('check/', CarrierCheckView.as_view(), name='check_carrier'),
+  ]
