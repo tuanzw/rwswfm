@@ -80,6 +80,7 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
         response = HttpResponse(status=200)
         response = trigger_client_event(response, 'on-success')
         response = trigger_client_event(response, 'showMessage', f'User {username} deleted!')
+        return response
 
 class UserCheckView(LoginRequiredMixin, View):
     def get(self, request):
