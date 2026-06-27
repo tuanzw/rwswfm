@@ -33,6 +33,11 @@
             <i class="bi bi-list-task"></i> Tasks
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.path == '/employees/' %}active{% endif %}" href="{% url 'list_employee' %}">
+            <i class="bi bi-file-person"></i> Employees
+          </a>
+        </li>
         {% endif %}
       </ul>
 

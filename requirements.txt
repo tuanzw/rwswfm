@@ -3,7 +3,6 @@ gunicorn
 psycopg[binary]
 django-environ
 django-extensions
-django-template-partials
 django-htmx
 django-crispy-forms
 crispy-bootstrap5

@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'crispy_forms',
     'crispy_bootstrap5',
-    'template_partials',
 ]
 
 MIDDLEWARE = [
@@ -83,20 +82,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql', 
+#         'NAME': env('DB_NAME'),
+#         'USER': env('DB_USER'),
+#         'PASSWORD': env('DB_PWD'),
+#         'HOST': env('DB_HOST'),
+#         'PORT': env('DB_PORT'),
+#         'OPTIONS':  {
+#             'sslkey': {'ca': os.path.join(BASE_DIR, 'ca.pem')
+#             }
+#         }
+#     }
+# }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql', 
-        'NAME': env('DB_NAME'),
-        'USER': env('DB_USER'),
-        'PASSWORD': env('DB_PWD'),
-        'HOST': env('DB_HOST'),
-        'PORT': env('DB_PORT'),
-        'OPTIONS':  {
-            'sslkey': {'ca': os.path.join(BASE_DIR, 'ca.pem')
-            }
-        }
-    }
-}
+    'default': { 'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'kohada.sqlite3' }
+}  
 
 
 # Password validation

@@ -4,6 +4,41 @@
 
     const modal = new bootstrap.Modal(modalEl);
 
+    // ==================== Select2 Functions ====================
+    const initSelect2 = () => {
+        const selects = modalEl.querySelectorAll("select:not(.select2-hidden-accessible)");
+
+        selects.forEach(select => {
+            $(select).select2({
+                dropdownParent: $(modalEl),
+                theme: "classic",
+                width: "100%"
+            });
+        });
+    };
+
+    const cleanupSelect2 = () => {
+        const activeSelects = modalEl.querySelectorAll("select.select2-hidden-accessible");
+
+        activeSelects.forEach(select => {
+            const $select = $(select);
+            if ($select.data('select2')) {
+                $select.select2('destroy');
+            }
+
+            // Let vanilla JS handle attribute and data cleanup cleanly
+            select.classList.remove("select2-hidden-accessible");
+            select.removeAttribute("data-select2-id");
+            delete select.dataset.select2Id;
+        });
+
+        // Scoped DOM cleanup
+        modalEl.querySelectorAll(".select2-container").forEach(el => el.remove());
+        document.querySelectorAll("[data-select2-id]").forEach(el => el.removeAttribute("data-select2-id"));
+    };
+
+    // ==================== HTMX & Bootstrap Events ====================
+
     // Tooltip initialization after HTMX loads content
     htmx.on("htmx:load", () => {
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
@@ -15,6 +50,8 @@
         if (e.detail.target.id === "dialog") {
             console.log("HTMX:afterSwap → showing modal");
             modal.show();
+            // Initialize Select2 after content is swapped
+            initSelect2();
         }
     });
 
@@ -39,7 +76,11 @@
     // Cleanup modal content once it's hidden
     htmx.on("hidden.bs.modal", (e) => {
         if (e.target.id === "modal") {
-            document.getElementById("dialog").innerHTML = "";
+            cleanupSelect2();
+            const dialog = document.getElementById("dialog");
+            if (dialog) {
+                dialog.innerHTML = "";
+            }
         }
     });
 
