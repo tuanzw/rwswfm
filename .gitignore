@@ -170,6 +170,7 @@ pyvenv.cfg
 *.log
 *.log*
 *.pem
+*.sqlite3
 
 
 # ignore static files by python manage.py loadstatics

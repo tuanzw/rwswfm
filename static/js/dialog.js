@@ -4,37 +4,29 @@
 
     const modal = new bootstrap.Modal(modalEl);
 
-    // ==================== Select2 Functions ====================
-    const initSelect2 = () => {
-        const selects = modalEl.querySelectorAll("select:not(.select2-hidden-accessible)");
-
+    // ==================== Tom Select Functions ====================
+    const initTomSelect = () => {
+        const selects = modalEl.querySelectorAll("select");
         selects.forEach(select => {
-            $(select).select2({
-                dropdownParent: $(modalEl),
-                theme: "classic",
-                width: "100%"
+            if (select.tomselect) return;
+            const plugins = select.multiple ? ['remove_button'] : [];
+            new TomSelect(select, {
+                // the dropdown will be appended as a child of the control
+                dropdownParent: null,
+                plugins: plugins,
+
             });
         });
     };
 
-    const cleanupSelect2 = () => {
-        const activeSelects = modalEl.querySelectorAll("select.select2-hidden-accessible");
-
-        activeSelects.forEach(select => {
-            const $select = $(select);
-            if ($select.data('select2')) {
-                $select.select2('destroy');
+    const cleanupTomSelect = () => {
+        const selects = modalEl.querySelectorAll("select");
+        selects.forEach(select => {
+            // If Tom Select is attached to this element, destroy it natively
+            if (select.tomselect) {
+                select.tomselect.destroy();
             }
-
-            // Let vanilla JS handle attribute and data cleanup cleanly
-            select.classList.remove("select2-hidden-accessible");
-            select.removeAttribute("data-select2-id");
-            delete select.dataset.select2Id;
         });
-
-        // Scoped DOM cleanup
-        modalEl.querySelectorAll(".select2-container").forEach(el => el.remove());
-        document.querySelectorAll("[data-select2-id]").forEach(el => el.removeAttribute("data-select2-id"));
     };
 
     // ==================== HTMX & Bootstrap Events ====================
@@ -50,8 +42,8 @@
         if (e.detail.target.id === "dialog") {
             console.log("HTMX:afterSwap → showing modal");
             modal.show();
-            // Initialize Select2 after content is swapped
-            initSelect2();
+            // Initialize Tom Select after content is swapped
+            initTomSelect();
         }
     });
 
@@ -76,7 +68,7 @@
     // Cleanup modal content once it's hidden
     htmx.on("hidden.bs.modal", (e) => {
         if (e.target.id === "modal") {
-            cleanupSelect2();
+            cleanupTomSelect();
             const dialog = document.getElementById("dialog");
             if (dialog) {
                 dialog.innerHTML = "";
