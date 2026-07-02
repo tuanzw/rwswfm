@@ -23,8 +23,25 @@
 <tr id="row-{{ team.id }}">
     <th scope="row">{{team.id}}</th>
     <td>{{team.name}}</td>
+    <td>{% if team.leader %}
+        <span class="badge bg-primary">{{ team.leader }}</span>
+        {% else %}
+        <span class="text-muted">-</span>
+        {% endif %}
+    </td>
+    <td>
+        {% for subteam in team.subteams.all %}
+        <span class="badge bg-secondary">{{ subteam.name }}</span>
+        {% empty %}
+        <span class="text-muted">-</span>
+        {% endfor %}
+    </td>
     <td class="text-center"><span>{% if team.active %}<i class="bi bi-check-square"></i>
             {% else %}<i class="bi bi-square-fill"></i>{% endif %}</span></td>
+    <td><small class="text-muted">{{team.created_date|date:"d-m-Y"}}</small></td>
+    <td><small class=" text-muted">{{team.created_by}}</small></td>
+    <td><small class="text-muted">{{team.updated_date|date:"d-m-Y"}}</small></td>
+    <td><small class="text-muted">{{team.updated_by}}</small></td>
     {% if perms.core.add_team %}
     <td><span class="hover m-1" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-get="{% url 'edit_team' team.id %}"
             hx-target="#dialog" data-bs-toggle="tooltip" data-bs-title="Edit">
@@ -57,7 +74,13 @@
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Name</th>
+                <th scope="col">Leader</th>
+                <th scope="col">Subteams</th>
                 <th scope="col" class="text-center">Active</th>
+                <th scope="col">Created Date</th>
+                <th scope="col">Created By</th>
+                <th scope="col">Updated Date</th>
+                <th scope="col">Updated By</th>
                 {% if perms.core.add_team %}
                 <th scope="col"></th>
                 {% endif %}

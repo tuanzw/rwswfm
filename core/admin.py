@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, Carrier, Team
+from .models import User, Carrier, Team, Task, Employee
 
 # Register your models here.
 fields = list(UserAdmin.fieldsets)
@@ -12,6 +12,9 @@ UserAdmin.fieldsets = tuple(fields)
 admin.site.register(User, UserAdmin)
 admin.site.register(Carrier)
 admin.site.register(Team)
+admin.site.register(Task)
+admin.site.register(Employee)
+
 
 
 

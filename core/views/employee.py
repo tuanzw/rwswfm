@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
+import django.db.transaction as transaction
 from crispy_forms.templatetags.crispy_forms_filters import as_crispy_field
 from django_htmx.http import trigger_client_event
 
@@ -32,17 +33,9 @@ class EmployeeAddView(LoginRequiredMixin, CreateView):
         kwargs['user'] = self.request.user
         return kwargs
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            'hx_target': '#table_id_employee',
-            'hx_swap': 'beforeend',
-        })
-        return context
-
     def form_valid(self, form):
         obj = form.save()
-        message = f'Employee {obj.code} - {obj.name} added successfully!'
+        message = f'Employee {obj.user.username} - {obj.user.first_name} {obj.user.last_name} added successfully!'
         
         response = render(self.request, 'employee.html#employee-rows', {'employees': [obj]})
         response = trigger_client_event(response, 'on-success')
@@ -73,8 +66,9 @@ class EmployeeEditView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         obj = form.save()
-        message = f'Employee {obj.code} - {obj.name} updated successfully!'
-        
+        username = obj.user.username
+        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+        message = f'Employee {username} - {full_name} updated successfully!'
         response = render(self.request, 'employee.html#employee-rows', {'employees': [obj]})
         response = trigger_client_event(response, 'on-success')
         response = trigger_client_event(response, 'showMessage', message)
@@ -82,7 +76,12 @@ class EmployeeEditView(LoginRequiredMixin, UpdateView):
 
     def form_invalid(self, form):
         context = self.get_context_data(form=form)
-        return render(self.request, 'employee.html#employee-form', context)
+        response = render(self.request, 'employee.html#employee-form', context)
+        # TEMPORARY OVERRIDE: Keep the HTML target as '#row-{pk}', 
+        # but safely reroute this specific validation error response into the modal.
+        response['HX-Retarget'] = '#dialog'
+        response['HX-Reswap'] = 'outerHTML'
+        return response
 
 
 class EmployeeDeleteView(LoginRequiredMixin, DeleteView):
@@ -90,13 +89,19 @@ class EmployeeDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        code = self.object.code
-        name = self.object.name
-        self.object.delete()
+        user = self.object.user  # Grab the linked User instance before deleting anything
+        
+        username = user.username
+        full_name = f"{user.first_name} {user.last_name}".strip()
+        
+        with transaction.atomic():
+            # Deleting the User first will automatically trigger CASCADE and delete the Employee too,
+            # but explicitly calling both or letting CASCADE handle it via user.delete() is safer.
+            user.delete()
         
         response = HttpResponse(status=200)
         response = trigger_client_event(response, 'on-success')
-        response = trigger_client_event(response, 'showMessage', f'Employee {code} - {name} deleted!')
+        response = trigger_client_event(response, 'showMessage', f'Employee {username} - {full_name} deleted!')
         return response
 
 
@@ -105,6 +110,6 @@ class EmployeeCheckView(LoginRequiredMixin, View):
     def get(self, request):
         form = EmployeeForm(request.GET, user=request.user)
         # Check the most likely field to validate (e.g. code)
-        response = HttpResponse(as_crispy_field(form['code']))
-        trigger = 'frm-has-errors' if form.has_error('code') else 'frm-no-errors'
+        response = HttpResponse(as_crispy_field(form['employee_code']))
+        trigger = 'frm-has-errors' if form.has_error('employee_code') else 'frm-no-errors'
         return trigger_client_event(response, trigger)

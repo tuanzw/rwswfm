@@ -13,23 +13,29 @@ class UserForm(UserCreationForm):
         model = User
         fields = ('username', 'first_name', 'last_name', 'password1', 'password2')
 
-    username = forms.CharField(max_length=150,
+    username = forms.CharField(max_length=20,
         widget=forms.TextInput(attrs={
+            'class': 'form-control',
             'placeholder': 'Username',
+            'style': 'text-transform: uppercase;',
             'hx-get': reverse_lazy('check_username'),
             'hx-trigger': 'keyup changed delay:1s',
             'hx-target': '#div_id_username',
             'hx-swap': 'outerHTML',
         }))
     
-    first_name = forms.CharField(max_length=150,
+    first_name = forms.CharField(max_length=30,
         widget=forms.TextInput(attrs={
-            'placeholder': 'First name'
+            'class': 'form-control',
+            'placeholder': 'First name',
+            'style': 'text-transform: capitalize;',
         }))
     
-    last_name = forms.CharField(max_length=150,
+    last_name = forms.CharField(max_length=50,
         widget=forms.TextInput(attrs={
-            'placeholder': 'Last name'
+            'class': 'form-control',
+            'placeholder': 'Last name',
+            'style': 'text-transform: capitalize;',
         }))
     
         

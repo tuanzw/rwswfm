@@ -106,8 +106,9 @@ User(AbstractUser)
 
 Team:
 - name
+- leader is the Employee
+- subteams are the teams themselve
 - active
-- slug
 
 Task:
 - name
@@ -121,10 +122,12 @@ Vendor:
 - slug
 
 Employee
-- empid
-- name
+- user: OneToOne link to User for authorization
+- gender
+- dob
+- id_number
 - active
-- vendor
+- vendor: tba
 
 Assignment
 - employee
@@ -135,3 +138,6 @@ Assignment
 - mi_actual
 - status
 
+# Bug fix
+- initTomSelect when modal is loaded
+- HX-Retarget & HX-Reswap for form invalid validation (Team & Employee EditViews)

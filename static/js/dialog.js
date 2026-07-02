@@ -35,6 +35,8 @@
     htmx.on("htmx:load", () => {
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+        // Initialize Tom Select for any new select elements loaded via HTMX
+        initTomSelect();
     });
 
     // Show modal if the #dialog container gets new content
@@ -42,8 +44,6 @@
         if (e.detail.target.id === "dialog") {
             console.log("HTMX:afterSwap → showing modal");
             modal.show();
-            // Initialize Tom Select after content is swapped
-            initTomSelect();
         }
     });
 

@@ -25,18 +25,13 @@ class TeamAddView(LoginRequiredMixin, CreateView):
     form_class = TeamForm
     template_name = 'team.html#team-form'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            'hx_target': '#table_id_team',
-            'hx_swap': 'beforeend',
-        })
-        return context
-
+    # Don't need get_context_data for AddView 
+    # The default context in hmtl template is already set to the table id and beforeend swap
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
     def form_valid(self, form):
+        form.instance.created_by = self.request.user.username
         obj = form.save()
         message = f'{obj.name} added successfully!'
         response = render(self.request, 'team.html#team-rows', {'teams': [obj]})
@@ -45,13 +40,15 @@ class TeamAddView(LoginRequiredMixin, CreateView):
         return response
 
     def form_invalid(self, form):
-        return super().form_invalid(form)      
+        return super().form_invalid(form)
  
 class TeamEditView(LoginRequiredMixin, UpdateView):
     model = Team
     form_class = TeamForm
     template_name = 'team.html#team-form'
 
+    # hx-target is the edit row
+    # hx-swap is outerHTML so that the row is replaced with the response from the form submission.
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
@@ -61,6 +58,7 @@ class TeamEditView(LoginRequiredMixin, UpdateView):
         return context
 
     def form_valid(self, form):
+        form.instance.updated_by = self.request.user.username
         obj = form.save()
         message = f'{obj.name} updated successfully!'
         response = render(self.request, 'team.html#team-rows', {'teams': [obj]})
@@ -68,10 +66,14 @@ class TeamEditView(LoginRequiredMixin, UpdateView):
         response = trigger_client_event(response, 'showMessage', message)
         return response
 
-    # add extra_context in response as overiding form_invalid
     def form_invalid(self, form):
         context = self.get_context_data(form=form)
-        return render(self.request, 'team.html#team-form', context)
+        response = render(self.request, 'team.html#team-form', context)
+        # As the hx-target is set to the row when opening the edit form
+        # the invalid form needs to be retargeted to the dialog
+        response['HX-Retarget'] = '#dialog' # Hey HTMX, please retarget the response to the dialog but keep original target to the edit row.
+        response['HX-Reswap'] = 'outerHTML'
+        return response
 
 class TeamDeleteView(LoginRequiredMixin, DeleteView):
     model = Team
